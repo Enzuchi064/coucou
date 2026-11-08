@@ -35,6 +35,8 @@ export interface ClosedContent {
   dot: string | null;
   /** A note before the text (what plays). */
   note: boolean;
+  /** The playing track's cover, when one has arrived. */
+  art?: string | null;
 }
 
 export interface ClosedInputs {
@@ -43,7 +45,7 @@ export interface ClosedInputs {
   locale?: string;
   planUsage: PlanUsage | null;
   /** The song playing, if one plays on a declared music pill. */
-  music: { title: string; artist: string } | null;
+  music: { title: string; artist: string; art?: string | null } | null;
 }
 
 function time(now: Date, locale?: string): string {
@@ -61,7 +63,11 @@ export function closedContent(style: ClosedIsland, input: ClosedInputs): ClosedC
   switch (style) {
     case "hidden":
     case "empty":
+      return null;
     case "mochi":
+      // A song takes the pill over while it plays, cover and all; Mochi comes
+      // back when it stops.
+      if (input.music?.title) return musicContent(input.music);
       return null;
     case "time":
       return plain(time(input.now, input.locale));
@@ -77,9 +83,18 @@ export function closedContent(style: ClosedIsland, input: ClosedInputs): ClosedC
     case "music": {
       const m = input.music;
       if (!m || !m.title) return plain(time(input.now, input.locale));
-      return { text: m.artist ? `${m.title} · ${m.artist}` : m.title, dot: null, note: true };
+      return musicContent(m);
     }
   }
+}
+
+function musicContent(m: { title: string; artist: string; art?: string | null }): ClosedContent {
+  return {
+    text: m.artist ? `${m.title} · ${m.artist}` : m.title,
+    dot: null,
+    note: true,
+    art: m.art ?? null,
+  };
 }
 
 /** The closed island's width for a text `textWidth` px wide (0 for none). */

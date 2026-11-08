@@ -42,8 +42,12 @@ test("Claude's usage with its colour, the time while there are no numbers yet", 
 test("what plays, with its note; the time when nothing plays", () => {
   assert.equal(closedContent("music", input()).text, "20:28");
   const shown = closedContent("music", input({ music: { title: "Midnight City", artist: "M83" } }));
-  assert.deepEqual(shown, { text: "Midnight City · M83", dot: null, note: true });
+  assert.deepEqual(shown, { text: "Midnight City · M83", dot: null, note: true, art: null });
   assert.equal(closedContent("music", input({ music: { title: "Intro", artist: "" } })).text, "Intro");
+  // A song takes Mochi's pill over while it plays, cover included.
+  const withArt = closedContent("mochi", input({ music: { title: "Intro", artist: "M83", art: "data:image/png;base64,x" } }));
+  assert.equal(withArt.text, "Intro · M83");
+  assert.equal(withArt.art, "data:image/png;base64,x");
 });
 
 test("the island is as wide as its line, within bounds", () => {

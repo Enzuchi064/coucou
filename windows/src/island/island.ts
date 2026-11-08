@@ -15,8 +15,8 @@ import {
 } from "../core/layout";
 import { Sound } from "../core/sound";
 import { State } from "../core/state";
-import { SPOTIFY_ID, Spotify, islandDances } from "../core/spotify";
-import { CIDER_ID, Cider } from "../core/cider";
+import { SPOTIFY_ID, Spotify, currentArtwork as spotifyArtwork, islandDances } from "../core/spotify";
+import { CIDER_ID, Cider, currentArtwork as ciderArtwork } from "../core/cider";
 import { BotEngine, hexToRGB } from "../mochi/engine";
 import { Greeting } from "../mochi/greeting";
 import { createMiniBot, pruneMiniBots, syncMiniBotStates, tickMiniBots } from "../mochi/minibots";
@@ -76,6 +76,7 @@ export class Island {
   private clockTimer?: number;
   /** The closed island's one line (core/closed.ts), and what it last showed. */
   private closedEl!: HTMLElement;
+  private closedArt!: HTMLImageElement;
   private closedDot!: HTMLElement;
   private closedText!: HTMLElement;
   private closedKey = "";
@@ -326,9 +327,10 @@ export class Island {
     };
 
     this.wakeStrip = h("div", { id: "wake-strip" });
+    this.closedArt = h("img", { class: "art", alt: "", draggable: "false" }) as HTMLImageElement;
     this.closedDot = h("span", { class: "dot" });
     this.closedText = h("span", { class: "text" });
-    this.closedEl = h("div", { id: "island-closed" }, this.closedDot, this.closedText);
+    this.closedEl = h("div", { id: "island-closed" }, this.closedArt, this.closedDot, this.closedText);
     this.botGlow = h("div", { id: "bot-glow" });
     this.botCanvas = h("canvas", { id: "bot-canvas" });
     this.greetingCanvas = h("canvas", { id: "greeting-canvas" });
@@ -959,7 +961,7 @@ export class Island {
   private scheduleClosedLife() {
     if (this.closedLife != null) window.clearTimeout(this.closedLife);
     this.closedLife = null;
-    if (State.mode !== "hidden" || closedIsland(State.settings.closedIsland) !== "mochi") {
+    if (State.mode !== "hidden" || closedIsland(State.settings.closedIsland) !== "mochi" || State.musicPlaying) {
       this.closedLook = { x: 0, y: 0 };
       return;
     }
@@ -1001,25 +1003,34 @@ export class Island {
   private updateClosed() {
     const style = closedIsland(State.settings.closedIsland);
     const track = State.musicId === CIDER_ID ? Cider.state.track : Spotify.state.track;
+    const art = State.musicPlaying
+      ? (State.musicId === CIDER_ID ? ciderArtwork() : spotifyArtwork())
+      : null;
     const content: ClosedContent | null = State.mode === "hidden" || this.collapsed
       ? closedContent(style, {
         now: new Date(),
         locale: language(),
         planUsage: State.planUsage,
-        music: State.musicPlaying && track ? { title: track.title, artist: track.artist } : null,
+        music: State.musicPlaying && track ? { title: track.title, artist: track.artist, art } : null,
       })
       : null;
-    const key = content ? `${style}|${content.text}|${content.dot ?? ""}|${content.note}` : style;
+    const key = content ? `${style}|${content.text}|${content.dot ?? ""}|${content.note}|${content.art ?? ""}` : style;
     const shown = State.mode === "hidden" && this.closedShows;
     this.closedEl.classList.toggle("on", shown && content != null);
     if (key === this.closedKey) return;
     this.closedKey = key;
     this.closedText.textContent = content?.text ?? "";
-    this.closedEl.classList.toggle("note", content?.note === true);
+    this.closedEl.classList.toggle("note", content?.note === true && !content?.art);
+    this.closedEl.classList.toggle("has-art", !!content?.art);
+    if (content?.art) {
+      if (this.closedArt.getAttribute("src") !== content.art) this.closedArt.setAttribute("src", content.art);
+    } else {
+      this.closedArt.removeAttribute("src");
+    }
     this.closedDot.style.display = content?.dot ? "" : "none";
     if (content?.dot) this.closedDot.style.background = content.dot;
     // Measured as drawn: the font and the language decide the width.
-    const extras = (content?.dot ? 12 : 0) + (content?.note ? 16 : 0);
+    const extras = (content?.dot ? 12 : 0) + (content?.note && !content?.art ? 16 : 0) + (content?.art ? 24 : 0);
     const w = closedWidth(content ? this.closedText.scrollWidth : 0, extras);
     if (w !== this.closedW) {
       this.closedW = w;
@@ -1326,7 +1337,7 @@ export class Island {
     const botMoving = !this.botCx.settled || !this.botCy.settled || !this.botSize.settled;
     // Closed, only the folding — and Mochi reaching his place in the closed island.
     const busy = State.mode === "hidden"
-      ? settling || (closedIsland(State.settings.closedIsland) === "mochi" &&
+      ? settling || (closedIsland(State.settings.closedIsland) === "mochi" && !State.musicPlaying &&
         (botMoving || nowMs < this.closedAwakeUntil))
       : settling ||
         !this.botCx.settled || !this.botCy.settled || !this.botSize.settled ||
@@ -1343,7 +1354,7 @@ export class Island {
   private updateBotTargets() {
     let p = botPosition(State.mode, State.view, this.height.value, State.uploadProgress);
     // The closed island with Mochi in it, as on a Mac without a notch.
-    if (State.mode === "hidden" && closedIsland(State.settings.closedIsland) === "mochi") {
+    if (State.mode === "hidden" && closedIsland(State.settings.closedIsland) === "mochi" && !State.musicPlaying) {
       p = { cx: this.width.value / 2, cy: this.height.value / 2, diameter: CLOSED_BOT_D, opacity: 1 };
     }
     this.botCx.target = p.cx;

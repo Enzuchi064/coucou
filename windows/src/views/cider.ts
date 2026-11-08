@@ -114,12 +114,13 @@ function pillButton(color: string, icon: string, onClick: () => void): HTMLEleme
  */
 export function buildCiderPill(task: AgentTask, onTap: () => void): CiderPillHost {
   const color = task.color;
+  const art = h("img", { class: "np-pill-art", alt: "", draggable: "false" }) as HTMLImageElement;
   const mini = createMiniBot(task, 24, () => State.ciderPlaying);
   const label = h("span", { class: "lbl", text: task.name });
   const playBtn = pillButton(color, ICONS.play, togglePlay);
   const nextBtn = pillButton(color, ICONS.forward, () => void Bridge.ciderControl("next"));
   const controls = h("div", { class: "np-pill-controls" }, playBtn, nextBtn);
-  const pill = h("div", { class: "pill np-pill", onclick: onTap }, mini, label, controls);
+  const pill = h("div", { class: "pill np-pill", onclick: onTap }, art, mini, label, controls);
   pill.style.borderColor = `${color}24`;
   let hovered = false;
   let playing: boolean | null = null;
@@ -129,6 +130,13 @@ export function buildCiderPill(task: AgentTask, onTap: () => void): CiderPillHos
     const current = State.tasks.find((x) => x.id === task.id);
     const name = current?.name ?? task.name;
     if (label.textContent !== name) label.textContent = name;
+    const cover = s.track ? currentArtwork(s) : null;
+    pill.classList.toggle("has-art", !!cover);
+    if (cover) {
+      if (art.getAttribute("src") !== cover) art.setAttribute("src", cover);
+    } else {
+      art.removeAttribute("src");
+    }
     const show = hovered && s.track != null;
     pill.classList.toggle("controls", show);
     if (playing !== s.playing) {
