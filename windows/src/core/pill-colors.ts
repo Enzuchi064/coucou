@@ -10,7 +10,7 @@
  * Same list as PillColors.palette on macOS.
  */
 export const PILL_PALETTE: readonly string[] = [
-  "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#4ADE80",
+  "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#9CA3AF",
   "#2DD4BF", "#38BDF8", "#818CF8", "#C084FC", "#E879F9",
 ];
 

@@ -82,7 +82,7 @@ export const PILL_CATALOG: readonly PillDefinition[] = [
   { id: "agent_codex", name: "Codex", color: "#2DD4BF", category: "workspace",
     subtitle: N_("Integration"), source: "agent", support: "yes", connect: hooks },
   // A plugin that starts the relay, written from Settings → Agents (agents.rs).
-  { id: "agent_opencode", name: "OpenCode", color: "#4ADE80", category: "workspace",
+  { id: "agent_opencode", name: "OpenCode", color: "#9CA3AF", category: "workspace",
     subtitle: N_("Integration"), source: "agent", support: "yes", connect: hooks },
   // ── Agents ─────────────────────────────────────────────────────────────────
   { id: "agent_gemini", name: "Gemini CLI", color: "#8AB4F8", category: "agent",

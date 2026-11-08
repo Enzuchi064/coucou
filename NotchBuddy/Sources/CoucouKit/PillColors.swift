@@ -12,7 +12,7 @@ enum PillColors {
     /// the catalog already uses, and all of them stay readable on the island's
     /// black with Mochi's dark eyes, which a free colour picker could not promise.
     static let palette: [String] = [
-        "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#4ADE80",
+        "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#9CA3AF",
         "#2DD4BF", "#38BDF8", "#818CF8", "#C084FC", "#E879F9",
     ]
 

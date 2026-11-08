@@ -24,7 +24,7 @@ test("the catalog holds the Mac's pills with the Claude Code label for Windows a
     ["agent_cursor", "Cursor", "#C0C4CC", "workspace", "Integration"],
     ["agent_antigravity", "Antigravity", "#E879F9", "workspace", "Integration"],
     ["agent_codex", "Codex", "#2DD4BF", "workspace", "Integration"],
-    ["agent_opencode", "OpenCode", "#4ADE80", "workspace", "Integration"],
+    ["agent_opencode", "OpenCode", "#9CA3AF", "workspace", "Integration"],
     ["agent_gemini", "Gemini CLI", "#8AB4F8", "agent", "Agent"],
     ["agent_copilot", "Copilot CLI", "#818CF8", "agent", "Agent"],
     ["agent_muse", "Muse Code", "#38BDF8", "agent", "Agent"],

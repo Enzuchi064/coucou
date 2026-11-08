@@ -29,7 +29,7 @@ enum PillColorsTests {
 
         print("PillColors.palette — the ten colours Windows and Linux offer too")
         check("same list as PILL_PALETTE", PillColors.palette == [
-            "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#4ADE80",
+            "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#9CA3AF",
             "#2DD4BF", "#38BDF8", "#818CF8", "#C084FC", "#E879F9",
         ])
         check("all different", Set(PillColors.palette).count == PillColors.palette.count)

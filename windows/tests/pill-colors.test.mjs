@@ -25,7 +25,7 @@ test("a colour is six hex digits, written #RRGGBB in upper case", () => {
 test("the palette is ten different colours the catalog already uses", () => {
   // The same list as PillColors.palette on macOS (tests/PillColorsTests.swift).
   assert.deepEqual(PILL_PALETTE, [
-    "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#4ADE80",
+    "#F5F6F8", "#F4505E", "#F29B38", "#FACC15", "#9CA3AF",
     "#2DD4BF", "#38BDF8", "#818CF8", "#C084FC", "#E879F9",
   ]);
   const catalog = new Set(PILL_CATALOG.map((p) => p.color));

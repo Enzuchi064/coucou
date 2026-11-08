@@ -30,7 +30,7 @@ export const PROVIDERS: readonly ProviderDef[] = [
   { id: "openai", name: "OpenAI", accent: "#10A37F", key: "openai-api-key", urlField: null, defaultModel: "gpt-4o", prefer: "mini" },
   { id: "openrouter", name: "OpenRouter", accent: "#6467F2", key: "openrouter-api-key", urlField: null, defaultModel: "openrouter/auto", prefer: null },
   // OpenCode Go answers through its Console gateway: an API key, no local server.
-  { id: "opencode", name: "OpenCode Go", accent: "#4ADE80", key: "opencode-api-key", urlField: null, defaultModel: "", prefer: null },
+  { id: "opencode", name: "OpenCode Go", accent: "#9CA3AF", key: "opencode-api-key", urlField: null, defaultModel: "", prefer: null },
   { id: "ollama", name: "Ollama", accent: "#FACC15", key: null, urlField: "ollamaUrl", defaultModel: "", prefer: null },
   { id: "lmstudio", name: "LM Studio", accent: "#A3E635", key: null, urlField: "lmstudioUrl", defaultModel: "", prefer: null },
   { id: "custom", name: N_("Custom server"), accent: "#C0C4CC", key: null, urlField: "customUrl", defaultModel: "", prefer: null },
