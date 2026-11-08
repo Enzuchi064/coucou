@@ -80,6 +80,8 @@ export class Island {
   private closedDot!: HTMLElement;
   private closedText!: HTMLElement;
   private closedKey = "";
+  /** The compact pill's cover while music plays. */
+  private compactArt!: HTMLImageElement;
   /** Width of the closed island for what it shows now. */
   private closedW = 120;
   /** Mochi's little life in the closed island: where he looks, and until when
@@ -335,6 +337,7 @@ export class Island {
     this.botCanvas = h("canvas", { id: "bot-canvas" });
     this.greetingCanvas = h("canvas", { id: "greeting-canvas" });
     this.miniGrid = h("div", { id: "mini-grid" });
+    this.compactArt = h("img", { id: "compact-art", alt: "", draggable: "false" }) as HTMLImageElement;
     this.clockEl = h("div", { id: "island-clock" });
     this.countdown = h("div", { id: "countdown" });
     this.compactPlanDot = h("i", { class: "compact-plan-dot" });
@@ -391,6 +394,7 @@ export class Island {
       this.botGlow,
       this.botCanvas,
       this.miniGrid,
+      this.compactArt,
       this.compactPlan,
       this.clockEl,
       this.closedEl,
@@ -1000,12 +1004,16 @@ export class Island {
    * song, the plan): a new width animates the island and, once folded,
    * resizes the window to it.
    */
+  /** The cover of the track all three music pills show, when one plays. */
+  private musicArt(): string | null {
+    if (!State.musicPlaying) return null;
+    return State.musicId === CIDER_ID ? ciderArtwork() : spotifyArtwork();
+  }
+
   private updateClosed() {
     const style = closedIsland(State.settings.closedIsland);
     const track = State.musicId === CIDER_ID ? Cider.state.track : Spotify.state.track;
-    const art = State.musicPlaying
-      ? (State.musicId === CIDER_ID ? ciderArtwork() : spotifyArtwork())
-      : null;
+    const art = this.musicArt();
     const content: ClosedContent | null = State.mode === "hidden" || this.collapsed
       ? closedContent(style, {
         now: new Date(),
@@ -1533,9 +1541,16 @@ export class Island {
       }
     }
 
-    // Compact mini grid
-    const showGrid = State.mode === "compact";
+    // Compact mini grid, or the cover of what plays in its place.
+    const cover = this.musicArt();
+    const showGrid = State.mode === "compact" && !cover;
     this.miniGrid.style.opacity = showGrid ? "1" : "0";
+    this.compactArt.classList.toggle("on", State.mode === "compact" && !!cover);
+    if (cover) {
+      if (this.compactArt.getAttribute("src") !== cover) this.compactArt.setAttribute("src", cover);
+    } else {
+      this.compactArt.removeAttribute("src");
+    }
     if (showGrid) {
       const others = State.otherTasks.slice(0, 4);
       const key = others.map((t) => t.id).join("|");
@@ -1549,8 +1564,8 @@ export class Island {
       }
     }
 
-    // Compact Claude plan indicator
-    const showPlan = claudeCompactPillVisible();
+    // Compact Claude plan indicator (the cover takes its place while music plays)
+    const showPlan = claudeCompactPillVisible() && !cover;
     this.compactPlan.style.opacity = showPlan ? "1" : "0";
     this.compactPlan.style.pointerEvents = showPlan ? "auto" : "none";
     if (showPlan) {

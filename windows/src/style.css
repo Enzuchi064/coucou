@@ -184,6 +184,24 @@ body.anchor-bottom #island {
   transition: opacity 0.25s ease-in-out;
 }
 
+/* The compact pill's cover while a track plays, where the agent dots sit. */
+#compact-art {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  object-fit: cover;
+  display: none;
+  pointer-events: none;
+}
+
+#compact-art.on {
+  display: block;
+}
+
 /* Compact Claude plan gauge, next to the agent dots in the compact island. */
 #compact-plan {
   --plan: #6b7079;
