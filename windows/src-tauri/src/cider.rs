@@ -1114,6 +1114,7 @@ mod linux {
             let _ = app.emit_to(crate::island::WINDOW_LABEL, ARTWORK_EVENT, Artwork { art_url: url, data_url: data });
         }
     }
+}
 
 // ── Windows: the system media controls ────────────────────────────────────────
 //
