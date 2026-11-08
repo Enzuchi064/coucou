@@ -135,7 +135,7 @@ export const SETTINGS_ENTRIES: SettingsSearchEntry[] = [
     page: "integrations",
     title: "Integrations",
     terms: [
-      "Stripe", "GitHub", "Vercel", "n8n", "Notion", "Resend", "Cal.com", "WhatsApp", "Spotify", "Crypto",
+      "Stripe", "GitHub", "Vercel", "n8n", "Notion", "Resend", "Cal.com", "WhatsApp", "Spotify", "Cider", "Crypto",
       "Linear", "X", "YouTube", "Figma", "OpenWeather", "Railway", "Supabase", "Hugging Face", "Sentry", "PostHog", "Twilio",
     ],
   },

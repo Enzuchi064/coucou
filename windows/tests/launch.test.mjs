@@ -155,7 +155,7 @@ test("Enter starts Claude Code in the chosen folder with what was typed, then th
   const ev = { key: "Enter", preventDefault() {}, stopPropagation() {} };
   for (const fn of input.listeners.get("keydown")) fn(ev);
   await flush();
-  assert.deepEqual(sent("launch_session"), [{ folder: "/srv/site", prompt: `fix the "login" bug; rm -rf /` }]);
+  assert.deepEqual(sent("launch_session"), [{ folder: "/srv/site", prompt: `fix the "login" bug; rm -rf /`, agent: "claude" }]);
   assert.equal(did.launched, 1);
   assert.equal(input.value, "");
   view.sync();

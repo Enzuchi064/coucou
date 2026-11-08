@@ -8,6 +8,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type { Settings } from "./state";
 import type { RecapHistory, RecapPrefs } from "../recap/summary";
 import type { SpotifyState } from "./spotify";
+import type { CiderState } from "./cider";
 import type { UpdateStatus } from "./update";
 import type { WaIslandView, WaSettingsView, WaTestResult } from "./whatsapp";
 
@@ -264,7 +265,8 @@ export const Bridge = {
    * A new Claude Code session: the user's terminal in `folder`, running
    * Claude Code with the prompt (src-tauri/src/launch.rs). False when it couldn't.
    */
-  launchSession: (folder: string, prompt: string) => call<boolean>("launch_session", { folder, prompt }),
+  launchSession: (folder: string, prompt: string, agent: "claude" | "opencode" = "claude") =>
+    call<boolean>("launch_session", { folder, prompt, agent }),
 
   /** The system's folder picker, `start` open in it; null when cancelled. */
   pickFolder: (start: string | null) => call<string | null>("pick_folder", { start }),
@@ -477,6 +479,13 @@ export const Bridge = {
   spotifyOpen: () => call<boolean>("spotify_open"),
   /** Whether there is a Spotify to launch (Settings). */
   spotifyInstalled: () => call<boolean>("spotify_installed"),
+
+  // ── Cider (src-tauri/src/cider.rs) ────────────────────────────────────────
+  ciderRefresh: () => call<CiderState | null>("cider_refresh"),
+  ciderControl: (action: SpotifyAction, value?: number) =>
+    call<boolean>("cider_control", { action, value: value ?? null }),
+  ciderOpen: () => call<boolean>("cider_open"),
+  ciderInstalled: () => call<boolean>("cider_installed"),
 
   // ── WhatsApp (src-tauri/src/whatsapp) ─────────────────────────────────────
   /** The island's copy, asked once at start (then the "whatsapp" event). Island only. */

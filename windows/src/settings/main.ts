@@ -885,8 +885,10 @@ const INTEGRATIONS: IntegrationDef[] = [
     fields: [{ key: "notion-api-key", label: N_("Integration token"), placeholder: "ntn_…", secret: true }] },
   { id: "integration_calcom", name: "Cal.com", color: "#C9956A",
     fields: [{ key: "calcom-api-key", label: N_("API key"), placeholder: "cal_…", secret: true }] },
-  // Nothing to enter: Spotify is read from the OS (src-tauri/src/spotify.rs).
+  // Nothing to enter: Spotify and Cider are read from the OS
+  // (src-tauri/src/spotify.rs, cider.rs).
   { id: "integration_spotify", name: "Spotify", color: "#1DB954", fields: [] },
+  { id: "integration_cider", name: "Cider", color: "#FA2D48", fields: [] },
 ];
 
 const MAX_ACTIVE = MAX_DECLARED;
@@ -957,11 +959,12 @@ function integrationsSection(present: Record<string, boolean>): HTMLElement {
     }
 
     if (def.hint) rows.append(h("div", { class: "hint", text: t(def.hint) }));
-    if (def.id === "integration_spotify") {
-      // As on the Mac's row: said only when there is no Spotify to launch.
+    if (def.id === "integration_spotify" || def.id === "integration_cider") {
+      // As on the Mac's row: said only when there is no player to launch.
       const hint = h("div", { class: "hint", style: "padding-top:5px" });
       rows.append(hint);
-      void Bridge.spotifyInstalled().then((ok) => {
+      const installed = def.id === "integration_cider" ? Bridge.ciderInstalled() : Bridge.spotifyInstalled();
+      void installed.then((ok) => {
         hint.textContent = ok === false ? t("Not installed") : "";
       });
     }

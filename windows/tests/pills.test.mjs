@@ -45,6 +45,7 @@ test("the catalog holds the Mac's pills with the Claude Code label for Windows a
     ["integration_stripe", "Stripe", "#0570DE", "service", "Integration"],
     ["integration_music", "Apple Music", "#FA2D48", "service", "Integration"],
     ["integration_spotify", "Spotify", "#1DB954", "service", "Integration"],
+    ["integration_cider", "Cider", "#FA2D48", "service", "Integration"],
     ["integration_mail", "Mail", "#2F8CFF", "service", "Integration"],
     ["integration_whatsapp", "WhatsApp", "#25D366", "service", "Integration"],
   ];
@@ -116,7 +117,10 @@ test("this build leaves out what only macOS has", () => {
   // Spotify: MPRIS on Linux, the system media controls on Windows.
   assert.ok(linux.includes("integration_spotify"));
   assert.ok(windows.includes("integration_spotify"));
-  assert.deepEqual(linux, windows.filter((id) => id !== "integration_mail"));
+  // Cider: the system media controls on Windows only.
+  assert.ok(windows.includes("integration_cider"));
+  assert.ok(!linux.includes("integration_cider"));
+  assert.deepEqual(linux, windows.filter((id) => !["integration_mail", "integration_cider"].includes(id)));
 });
 
 test("Spotify: a service on both systems with nothing to set up", () => {

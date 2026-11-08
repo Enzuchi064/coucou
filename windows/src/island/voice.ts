@@ -6,6 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Bridge, IS_TAURI, onEvent } from "../core/bridge";
 import { MAX_DECLARED, availablePills, chooseMainPill, pillDefinition, sanitizeDeclared, toggleDeclared } from "../core/pills";
 import { Spotify } from "../core/spotify";
+import { CIDER_ID, Cider } from "../core/cider";
 import { State } from "../core/state";
 import { serviceCards } from "./phone-services";
 
@@ -98,7 +99,7 @@ function info(): string {
       fiveHourPercent: p.fiveHour?.usedPct ?? null,
       weekPercent: p.sevenDay?.usedPct ?? null,
     };
-  const s = Spotify.state;
+  const s = State.musicId === CIDER_ID ? Cider.state : Spotify.state;
   return JSON.stringify({
     pills: JSON.parse(describe()),
     sessions,

@@ -53,6 +53,10 @@ export function buildLaunch(actions: ViewActions): ViewHost {
   let menuOpen = false;
   let busy = false;
 
+  /** The main tool decides who starts the session: OpenCode when it is the main pill. */
+  const openCode = () => State.mainPillId === "agent_opencode";
+  const agentName = () => (openCode() ? "OpenCode" : "Claude Code");
+
   function setMenu(open: boolean) {
     menuOpen = open;
     body.classList.toggle("choosing", open);
@@ -107,7 +111,7 @@ export function buildLaunch(actions: ViewActions): ViewHost {
       return;
     }
     busy = true;
-    const ok = await Bridge.launchSession(folder, input.value);
+    const ok = await Bridge.launchSession(folder, input.value, openCode() ? "opencode" : "claude");
     busy = false;
     if (!ok) {
       failed = true;
@@ -138,13 +142,20 @@ export function buildLaunch(actions: ViewActions): ViewHost {
 
   function sync() {
     const folder = Launch.folder;
+    const name = agentName();
+    title.textContent = tl("New Claude Code session").toString().replace("Claude Code", name);
+    input.placeholder = t("What should Claude do?").replace("Claude", name);
     projectLabel.textContent = folder ? projectName(folder) : t("Choose a project");
     projectBtn.title = folder ?? "";
     projectBtn.classList.toggle("open", menuOpen);
     send.disabled = folder == null;
-    hint.textContent = failed ? t("Couldn't open the terminal in this folder.") : t("Opens your terminal in the project, with Claude Code and your words.");
+    hint.textContent = failed
+      ? t("Couldn't open the terminal in this folder.")
+      : t("Opens your terminal in the project, with Claude Code and your words.").replace("Claude Code", name);
     hint.classList.toggle("is-failed", failed);
   }
+
+  sync();
 
   return {
     el,

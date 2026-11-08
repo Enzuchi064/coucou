@@ -16,6 +16,7 @@ import {
 import { Sound } from "../core/sound";
 import { State } from "../core/state";
 import { SPOTIFY_ID, Spotify, islandDances } from "../core/spotify";
+import { CIDER_ID, Cider } from "../core/cider";
 import { BotEngine, hexToRGB } from "../mochi/engine";
 import { Greeting } from "../mochi/greeting";
 import { createMiniBot, pruneMiniBots, syncMiniBotStates, tickMiniBots } from "../mochi/minibots";
@@ -241,6 +242,7 @@ export class Island {
         else if (task.id === "integration_whatsapp") void Bridge.whatsappOpenApp();
         else if (task.id === "integration_gitea") void Bridge.openGitea();
         else if (task.id === SPOTIFY_ID) void Bridge.spotifyOpen();
+        else if (task.id === CIDER_ID) void Bridge.ciderOpen();
         else if (urls[task.id]) void Bridge.openUrl(urls[task.id]);
       },
       openUrl: (url) => {
@@ -986,13 +988,13 @@ export class Island {
    */
   private updateClosed() {
     const style = closedIsland(State.settings.closedIsland);
-    const track = Spotify.state.track;
+    const track = State.musicId === CIDER_ID ? Cider.state.track : Spotify.state.track;
     const content: ClosedContent | null = State.mode === "hidden" || this.collapsed
       ? closedContent(style, {
         now: new Date(),
         locale: language(),
         planUsage: State.planUsage,
-        music: State.spotifyPlaying && track ? { title: track.title, artist: track.artist } : null,
+        music: State.musicPlaying && track ? { title: track.title, artist: track.artist } : null,
       })
       : null;
     const key = content ? `${style}|${content.text}|${content.dot ?? ""}|${content.note}` : style;
@@ -1416,11 +1418,12 @@ export class Island {
     // Dances while music plays: always in the compact island, expanded only on
     // the music pill's card (BotCanvasView, macOS). Asked every frame.
     this.engine.setDancing(islandDances({
-      music: State.spotifyPlaying,
+      music: State.musicPlaying,
       state: State.effectiveState,
       mode: State.mode,
       view: State.view,
       focusId: State.focusTask?.id,
+      musicId: State.musicId ?? undefined,
     }));
 
     this.engine.update(dt);

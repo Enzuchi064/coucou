@@ -12,7 +12,8 @@ import type { FileDiff } from "./diff";
 import type { Bindings } from "./shortcuts";
 import { DEFAULT_OUTFIT, type Outfit } from "../mochi/wardrobe";
 import { pillColor } from "./pill-colors";
-import { Spotify, musicPlaying } from "./spotify";
+import { Spotify, SPOTIFY_ID, musicPlaying } from "./spotify";
+import { Cider, CIDER_ID } from "./cider";
 
 export type AgentSource = "claudeCode" | "n8n" | "agent";
 export type PillBadge = "approval" | "finished" | "error";
@@ -305,7 +306,24 @@ class AppState {
 
   /** Spotify plays on a declared pill: Mochi dances (Linux; never on Windows yet). */
   get spotifyPlaying(): boolean {
-    return musicPlaying(Spotify.state, sanitizeDeclared(this.settings, this.os).activeIntegrations);
+    return musicPlaying(Spotify.state, sanitizeDeclared(this.settings, this.os).activeIntegrations, SPOTIFY_ID);
+  }
+
+  /** Cider plays on a declared pill: Mochi dances too. */
+  get ciderPlaying(): boolean {
+    return musicPlaying(Cider.state, sanitizeDeclared(this.settings, this.os).activeIntegrations, CIDER_ID);
+  }
+
+  /** Either player: the island and the desktop Mochi dance on one rule. */
+  get musicPlaying(): boolean {
+    return this.spotifyPlaying || this.ciderPlaying;
+  }
+
+  /** The player to read "what plays" from: Cider first when both run. */
+  get musicId(): string | null {
+    if (this.ciderPlaying) return CIDER_ID;
+    if (this.spotifyPlaying) return SPOTIFY_ID;
+    return null;
   }
 
   get otherTasks(): AgentTask[] {

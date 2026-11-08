@@ -64,7 +64,20 @@ pub fn sh_quote(s: &str) -> String {
 /// shell again in the project once Claude Code quits.
 #[cfg_attr(windows, allow(dead_code))]
 pub fn shell_command(shell: &str, has_prompt: bool) -> Vec<String> {
-    let run = if has_prompt { r#"claude "$COUCOU_PROMPT""# } else { "claude" };
+    shell_command_for("claude", shell, has_prompt)
+}
+
+/// The same, for `claude` or `opencode`. OpenCode's TUI takes its first prompt
+/// with `--prompt`; Claude Code takes it as its first argument.
+#[cfg_attr(windows, allow(dead_code))]
+pub fn shell_command_for(agent: &str, shell: &str, has_prompt: bool) -> Vec<String> {
+    let bin = if agent == "opencode" { "opencode" } else { "claude" };
+    let run = match (bin, has_prompt) {
+        ("opencode", true) => r#"opencode --prompt "$COUCOU_PROMPT""#.to_string(),
+        ("opencode", false) => "opencode".to_string(),
+        (_, true) => format!(r#"{bin} "$COUCOU_PROMPT""#),
+        (_, false) => bin.to_string(),
+    };
     vec![shell.to_string(), "-lic".to_string(), format!("{run}; exec {} -l", sh_quote(shell))]
 }
 
@@ -115,8 +128,14 @@ pub fn linux_terminal_args(terminal: &str, dir: &str, command: &[String]) -> Vec
 /// The whole launch on Linux, `terminal` being the one found.
 #[cfg_attr(windows, allow(dead_code))]
 pub fn linux_spawn(terminal: &str, shell: &str, folder: &str, prompt: &str) -> Spawn {
+    linux_spawn_for("claude", terminal, shell, folder, prompt)
+}
+
+/// The whole launch on Linux for `claude` or `opencode`.
+#[cfg_attr(windows, allow(dead_code))]
+pub fn linux_spawn_for(agent: &str, terminal: &str, shell: &str, folder: &str, prompt: &str) -> Spawn {
     let prompt = clean_prompt(prompt);
-    let command = shell_command(shell, !prompt.is_empty());
+    let command = shell_command_for(agent, shell, !prompt.is_empty());
     let env = if prompt.is_empty() { Vec::new() } else { vec![("COUCOU_PROMPT".to_string(), prompt)] };
     Spawn { program: terminal.to_string(), args: linux_terminal_args(terminal, folder, &command), env, dir: folder.to_string() }
 }
@@ -145,14 +164,26 @@ pub fn windows_prompt(prompt: &str) -> String {
 /// but the file's path, which is ours, is spelled out.
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn powershell_script(prompt_file: Option<&str>) -> String {
-    let claude = "& (Get-Command claude -CommandType Application -TotalCount 1)";
+    powershell_script_for("claude", prompt_file)
+}
+
+/// The same, for `claude` or `opencode`. OpenCode's TUI takes its first prompt
+/// with `--prompt`; Claude Code takes it as its first argument.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub fn powershell_script_for(agent: &str, prompt_file: Option<&str>) -> String {
+    let (bin, prompt_arg) = if agent == "opencode" {
+        ("opencode", " --prompt $env:COUCOU_PROMPT")
+    } else {
+        ("claude", " $env:COUCOU_PROMPT")
+    };
+    let command = format!("& (Get-Command {bin} -CommandType Application -TotalCount 1)");
     match prompt_file {
-        None => claude.to_string(),
+        None => command,
         Some(file) => {
             let f = ps_quote(file);
             format!(
                 "$env:COUCOU_PROMPT = Get-Content -LiteralPath {f} -Raw -Encoding UTF8; \
-                 Remove-Item -LiteralPath {f}; {claude} $env:COUCOU_PROMPT"
+                 Remove-Item -LiteralPath {f}; {command}{prompt_arg}"
             )
         }
     }
@@ -170,7 +201,13 @@ pub fn wt_escape(s: &str) -> String {
 /// one). `shell` is pwsh.exe or powershell.exe.
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn windows_spawn(wt: Option<&str>, shell: &str, folder: &str, prompt_file: Option<&str>) -> Spawn {
-    let script = powershell_script(prompt_file);
+    windows_spawn_for("claude", wt, shell, folder, prompt_file)
+}
+
+/// The whole launch on Windows for `claude` or `opencode`.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub fn windows_spawn_for(agent: &str, wt: Option<&str>, shell: &str, folder: &str, prompt_file: Option<&str>) -> Spawn {
+    let script = powershell_script_for(agent, prompt_file);
     match wt {
         Some(wt) => Spawn {
             program: wt.to_string(),
@@ -247,7 +284,7 @@ fn start(spawn: &Spawn, new_console: bool) -> std::io::Result<()> {
 }
 
 #[cfg(target_os = "linux")]
-fn launch_here(folder: &str, prompt: &str) -> Result<String, String> {
+fn launch_here(folder: &str, prompt: &str, agent: &str) -> Result<String, String> {
     let shell = std::env::var("SHELL").ok().filter(|s| Path::new(s).is_absolute()).unwrap_or_else(|| "/bin/bash".into());
     let env_terminal = std::env::var("TERMINAL").ok();
     for candidate in linux_candidates(env_terminal.as_deref()) {
@@ -258,7 +295,7 @@ fn launch_here(folder: &str, prompt: &str) -> Result<String, String> {
         }) else {
             continue;
         };
-        let spawn = linux_spawn(&path.to_string_lossy(), &shell, folder, prompt);
+        let spawn = linux_spawn_for(agent, &path.to_string_lossy(), &shell, folder, prompt);
         match start(&spawn, false) {
             Ok(()) => return Ok(candidate),
             Err(err) => crate::log::line(format!("launch: {candidate} didn't start: {err}")),
@@ -268,7 +305,7 @@ fn launch_here(folder: &str, prompt: &str) -> Result<String, String> {
 }
 
 #[cfg(windows)]
-fn launch_here(folder: &str, prompt: &str) -> Result<String, String> {
+fn launch_here(folder: &str, prompt: &str, agent: &str) -> Result<String, String> {
     let prompt = windows_prompt(prompt);
     let file = if prompt.is_empty() {
         None
@@ -290,27 +327,29 @@ fn launch_here(folder: &str, prompt: &str) -> Result<String, String> {
     // spaces of "Program Files" through wt.exe's re-joined command line.
     let shell = if platform::find_on_path("pwsh").is_some() { "pwsh.exe" } else { "powershell.exe" };
     if let Some(wt) = platform::windows_terminal() {
-        let spawn = windows_spawn(Some(&wt.to_string_lossy()), shell, folder, file.as_deref());
+        let spawn = windows_spawn_for(agent, Some(&wt.to_string_lossy()), shell, folder, file.as_deref());
         match start(&spawn, false) {
             Ok(()) => return Ok("Windows Terminal".into()),
             Err(err) => crate::log::line(format!("launch: Windows Terminal didn't start: {err}")),
         }
     }
-    let spawn = windows_spawn(None, shell, folder, file.as_deref());
+    let spawn = windows_spawn_for(agent, None, shell, folder, file.as_deref());
     start(&spawn, true).map(|()| "PowerShell".into()).map_err(|e| e.to_string())
 }
 
-/// Opens the user's terminal in `folder` with Claude Code and the prompt.
-/// False when the folder isn't one or no terminal could be started.
+/// Opens the user's terminal in `folder` with Claude Code or OpenCode and the
+/// prompt. False when the folder isn't one or no terminal could be started.
 #[tauri::command]
-pub fn launch_session(folder: String, prompt: String) -> bool {
+pub fn launch_session(folder: String, prompt: String, agent: Option<String>) -> bool {
     if !valid_folder(&folder) {
         return false;
     }
+    let agent = if agent.as_deref() == Some("opencode") { "opencode" } else { "claude" };
+    let tool = if agent == "opencode" { "OpenCode" } else { "Claude Code" };
     let name = session_window::folder_name(&folder).to_string();
-    match launch_here(&folder, &prompt) {
+    match launch_here(&folder, &prompt, agent) {
         Ok(terminal) => {
-            crate::log::line(format!("launch: Claude Code in {name} with {terminal}"));
+            crate::log::line(format!("launch: {tool} in {name} with {terminal}"));
             true
         }
         Err(err) => {
@@ -455,6 +494,20 @@ mod tests {
         let empty = linux_spawn("kitty", "/bin/zsh", "/home/me/p", "  \n ");
         assert!(empty.env.is_empty());
         assert_eq!(empty.args.last().unwrap(), "claude; exec /bin/zsh -l");
+    }
+
+    #[test]
+    fn opencode_takes_its_prompt_with_the_prompt_flag() {
+        assert_eq!(
+            shell_command_for("opencode", "/bin/zsh", true),
+            s(&["/bin/zsh", "-lic", r#"opencode --prompt "$COUCOU_PROMPT"; exec /bin/zsh -l"#])
+        );
+        assert_eq!(shell_command_for("opencode", "/bin/zsh", false).last().unwrap(), "opencode; exec /bin/zsh -l");
+        let script = powershell_script_for("opencode", Some(r"C:\Temp\p.txt"));
+        assert!(script.contains("Get-Command opencode -CommandType Application"));
+        assert!(script.contains("--prompt $env:COUCOU_PROMPT"));
+        let spawn = windows_spawn_for("opencode", None, "powershell.exe", r"C:\code", None);
+        assert!(spawn.args.last().unwrap().contains("Get-Command opencode"));
     }
 
     #[test]

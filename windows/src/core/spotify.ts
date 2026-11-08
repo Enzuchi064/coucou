@@ -91,9 +91,9 @@ export function volumeLevel(volume: number): 0 | 1 | 2 | 3 {
   return 3;
 }
 
-/** Music is playing on a declared Spotify pill. */
-export function musicPlaying(s: SpotifyState, activeIntegrations: readonly string[]): boolean {
-  return s.playing && s.track != null && activeIntegrations.includes(SPOTIFY_ID);
+/** Music is playing on a declared player's pill. */
+export function musicPlaying(s: SpotifyState, activeIntegrations: readonly string[], id: string = SPOTIFY_ID): boolean {
+  return s.playing && s.track != null && activeIntegrations.includes(id);
 }
 
 /** The states Mochi dances in; the rest (an alert, an error, sleep) win. */
@@ -109,10 +109,11 @@ export function islandDances(o: {
   mode: IslandMode;
   view: IslandViewName;
   focusId: string | null | undefined;
+  musicId?: string;
 }): boolean {
   if (!o.music || !DANCE_STATES.has(o.state)) return false;
   if (o.mode === "compact") return true;
-  return o.mode === "expanded" && o.view === "overview" && o.focusId === SPOTIFY_ID;
+  return o.mode === "expanded" && o.view === "overview" && o.focusId === (o.musicId ?? SPOTIFY_ID);
 }
 
 /** Mochi on the desktop: the compact island's rules (DesktopMochi.swift). */
