@@ -26,6 +26,9 @@ pub struct Settings {
     pub main_pill: String,
     /// "primary" = the main display, "cursor" = whichever display the mouse is on.
     pub screen: String,
+    /// Where the island sits: "top" (the Mac's notch position) or "bottom-right"
+    /// (a floating pill in the corner of the work area).
+    pub island_position: String,
     pub autostart: bool,
     pub hooks_installed: bool,
     /// Claude model used by the chat. Changeable in the settings window.
@@ -160,6 +163,7 @@ impl Default for Settings {
             ],
             main_pill: "integration_claude".into(),
             screen: "primary".into(),
+            island_position: "bottom-right".into(),
             autostart: false,
             hooks_installed: false,
             model: default_model(),

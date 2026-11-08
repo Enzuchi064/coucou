@@ -376,6 +376,18 @@ mod zoom_tests {
     }
 
     #[test]
+    fn the_pill_stays_inside_the_bottom_right_work_area() {
+        let work = (0, 0, 1920, 1040);
+        let origin = anchored_origin((0, 0), (1920, 1080), work, 160, 42, 1.0, "bottom-right", 0);
+        assert_eq!(origin, (1920 - 160 - 12, 1040 - 42 - 12));
+        // A taskbar at the bottom leaves the pill above it.
+        let origin = anchored_origin((0, 0), (1920, 1080), work, 720, 320, 1.0, "bottom-right", 0);
+        assert_eq!(origin, (1920 - 720 - 12, 1040 - 320 - 12));
+        // The old top centre is unchanged.
+        assert_eq!(anchored_origin((0, 0), (1920, 1080), work, 720, 320, 1.0, "top", 0), (600, 0));
+    }
+
+    #[test]
     fn a_top_taskbar_moves_the_island_down_and_nothing_else_does() {
         // Taskbar at the bottom (or none): the work area starts at the top.
         assert_eq!(top_inset_from(0, 0), 0);
@@ -425,19 +437,54 @@ fn top_inset_from(monitor_y: i32, work_y: i32) -> i32 {
     if (0..200).contains(&inset) { inset } else { 0 }
 }
 
-pub fn apply_geometry(app: &AppHandle, pref: &str, collapsed: Option<(f64, f64)>) {
+/// Where a window of `pw`×`ph` physical pixels goes on a display, in physical
+/// coordinates. "top" is the Mac's notch position; "bottom-right" is a floating
+/// pill inside the work area, clear of the taskbar.
+fn anchored_origin(
+    mp: (i32, i32),
+    ms: (u32, u32),
+    work: (i32, i32, u32, u32),
+    pw: u32,
+    ph: u32,
+    scale: f64,
+    position: &str,
+    top_inset: i32,
+) -> (i32, i32) {
+    if position == "bottom-right" {
+        let margin = (12.0 * scale).round() as i32;
+        (
+            work.0 + work.2 as i32 - pw as i32 - margin,
+            work.1 + work.3 as i32 - ph as i32 - margin,
+        )
+    } else {
+        (mp.0 + (ms.0 as i32 - pw as i32) / 2, mp.1 + top_inset)
+    }
+}
+
+pub fn apply_geometry(app: &AppHandle, pref: &str, position: &str, collapsed: Option<(f64, f64)>) {
     let Some(win) = window(app) else { return };
     let Some(m) = target_monitor(app, pref) else { return };
 
     let scale = m.scale_factor();
     let mp = *m.position();
     let ms = *m.size();
+    let work = m.work_area();
+    let work_pos = *work.position();
+    let work_size = *work.size();
 
     let (lw, lh) = collapsed.map(clamp_collapsed).unwrap_or((PANEL_W, PANEL_H));
     let pw = (lw * scale).round().max(1.0) as u32;
     let ph = (lh * scale).round().max(1.0) as u32;
-    let x = mp.x + (ms.width as i32 - pw as i32) / 2;
-    let y = mp.y + top_inset(&m);
+    let (x, y) = anchored_origin(
+        (mp.x, mp.y),
+        (ms.width, ms.height),
+        (work_pos.x, work_pos.y, work_size.width, work_size.height),
+        pw,
+        ph,
+        scale,
+        position,
+        top_inset(&m),
+    );
 
     // GTK never sizes a non-resizable window below its natural size (200 px
     // here), so on Linux the 6 px wake strip would stay a 200 px block. tao

@@ -25,6 +25,11 @@ function applyLanguage() {
   setLanguage(resolveLanguage(State.settings.language, systemLanguages()));
 }
 
+/** The island's card is rounded at the bottom for the top edge; a bottom-right pill is rounded all round. */
+function applyIslandAnchor() {
+  document.body.classList.toggle("anchor-bottom", State.settings.islandPosition === "bottom-right");
+}
+
 async function main() {
   const root = document.getElementById("root");
   if (!root) return;
@@ -56,6 +61,7 @@ async function main() {
   // sync. Nothing is rebuilt, so tasks, steps and the chat stay as they are.
   onLanguageChange(() => State.notify());
   applyLanguage();
+  applyIslandAnchor();
   // Rust shows the tray and its errors in the same language as the webview.
   void Bridge.setSystemLanguages(systemLanguages());
   island.applySettings();
@@ -153,6 +159,7 @@ async function main() {
     const previousMain = State.mainPillId;
     State.settings = { ...State.settings, ...s };
     applyLanguage();
+    applyIslandAnchor();
     island.applySettings();
     State.loadIntegrationTasks();
     // A new main tool comes to the front, as on macOS.

@@ -117,6 +117,8 @@ export interface Settings {
   mainPill: string;
   /** "primary", "cursor", or `at:<x>,<y>` for one display (logical origin). */
   screen: string;
+  /** "top" (the Mac's notch position) or "bottom-right" (a floating pill). */
+  islandPosition: "top" | "bottom-right";
   autostart: boolean;
   hooksInstalled: boolean;
   /** Claude model used by the chat. */
@@ -189,6 +191,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ],
   mainPill: DEFAULT_MAIN_PILL,
   screen: "primary",
+  islandPosition: "bottom-right",
   autostart: false,
   hooksInstalled: false,
   model: "claude-opus-5",

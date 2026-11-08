@@ -1092,6 +1092,15 @@ function generalSection(): HTMLElement {
     void save();
   });
 
+  const bottomRight = toggle(settings.islandPosition === "bottom-right", (v) => {
+    settings.islandPosition = v ? "bottom-right" : "top";
+    void save();
+  });
+  const topHint = h("div", {
+    class: "hint",
+    text: t("A PC has no notch: once closed, a small island stays at the top of the screen. Hover it to bring Coucou back. Hidden, move the pointer to the very top of the screen."),
+  });
+
   const sound = toggle(settings.soundEnabled, (v) => { settings.soundEnabled = v; void save(); });
   const openOnHover = toggle(settings.openOnHover, (v) => { settings.openOnHover = v; void save(); });
   const autostart = toggle(settings.autostart, (v) => { settings.autostart = v; void save(); });
@@ -1099,6 +1108,8 @@ function generalSection(): HTMLElement {
     setSwitch(sound, settings.soundEnabled);
     setSwitch(openOnHover, settings.openOnHover);
     setSwitch(autostart, settings.autostart);
+    setSwitch(bottomRight, settings.islandPosition === "bottom-right");
+    topHint.style.display = settings.islandPosition === "bottom-right" ? "none" : "";
     // A field being edited keeps what is in it; it catches up when it is left.
     if (document.activeElement !== volume) volume.value = String(settings.soundVolume);
     if (document.activeElement !== autoClose) {
@@ -1138,7 +1149,11 @@ function generalSection(): HTMLElement {
       h("label", { text: t("Closed island shows") }),
       closed,
     ),
-    h("div", { class: "hint", text: t("A PC has no notch: once closed, a small island stays at the top of the screen. Hover it to bring Coucou back. Hidden, move the pointer to the very top of the screen.") }),
+    topHint,
+    h("div", { class: "row" },
+      h("label", { text: t("Bottom right") }),
+      bottomRight,
+    ),
     h("div", { class: "row" },
       h("label", { text: t("Auto-close") }),
       autoClose,
