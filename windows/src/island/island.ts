@@ -885,10 +885,19 @@ export class Island {
     const w = this.width.value;
     const hh = this.height.value;
     const r = this.radius.value;
+    const anchored = document.body.classList.contains("anchor-bottom");
     this.islandEl.style.width = `${w}px`;
     this.islandEl.style.height = `${hh}px`;
-    this.islandEl.style.borderRadius = `0 0 ${r}px ${r}px`;
-    this.islandEl.style.transform = `translateX(-50%)`;
+    this.islandEl.style.borderRadius = anchored ? `${r}px` : `0 0 ${r}px ${r}px`;
+    if (anchored) {
+      this.islandEl.style.left = "auto";
+      this.islandEl.style.right = "0";
+      this.islandEl.style.transform = "none";
+    } else {
+      this.islandEl.style.left = "50%";
+      this.islandEl.style.right = "auto";
+      this.islandEl.style.transform = `translateX(-50%)`;
+    }
     // These follow the island as it resizes, so they belong here rather than in
     // the state-driven DOM sync.
     this.miniGrid.style.left = `${w - 40 - 14.5}px`;
@@ -898,7 +907,10 @@ export class Island {
     this.uploadCanvas.el.style.left = `${(w - EXPANDED_W) / 2}px`;
 
     const viewportW = window.innerWidth > 0 ? window.innerWidth : PANEL_W;
-    const rect = { x: (viewportW - w) / 2, y: 0, w, h: hh };
+    const viewportH = window.innerHeight > 0 ? window.innerHeight : PANEL_H;
+    const rect = anchored
+      ? { x: viewportW - w, y: viewportH - hh, w, h: hh }
+      : { x: (viewportW - w) / 2, y: 0, w, h: hh };
     const p = this.pushedRect;
     if (Math.abs(p.x - rect.x) > 0.5 || Math.abs(p.w - rect.w) > 0.5 || Math.abs(p.h - rect.h) > 0.5) {
       this.pushedRect = rect;
