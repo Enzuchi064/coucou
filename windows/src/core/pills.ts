@@ -81,15 +81,15 @@ export const PILL_CATALOG: readonly PillDefinition[] = [
     subtitle: N_("Integration"), source: "agent", support: "yes", connect: hooks },
   { id: "agent_codex", name: "Codex", color: "#2DD4BF", category: "workspace",
     subtitle: N_("Integration"), source: "agent", support: "yes", connect: hooks },
+  // A plugin that starts the relay, written from Settings → Agents (agents.rs).
+  { id: "agent_opencode", name: "OpenCode", color: "#4ADE80", category: "workspace",
+    subtitle: N_("Integration"), source: "agent", support: "yes", connect: hooks },
   // ── Agents ─────────────────────────────────────────────────────────────────
   { id: "agent_gemini", name: "Gemini CLI", color: "#8AB4F8", category: "agent",
     subtitle: N_("Agent"), source: "agent", support: "yes", connect: hooks },
   { id: "agent_copilot", name: "Copilot CLI", color: "#818CF8", category: "agent",
     subtitle: N_("Agent"), source: "agent", support: "yes", connect: hooks },
   { id: "agent_muse", name: "Muse Code", color: "#38BDF8", category: "agent",
-    subtitle: N_("Agent"), source: "agent", support: "yes", connect: hooks },
-  // A plugin that starts the relay, written from Settings → Agents (agents.rs).
-  { id: "agent_opencode", name: "OpenCode", color: "#4ADE80", category: "agent",
     subtitle: N_("Agent"), source: "agent", support: "yes", connect: hooks },
   { id: "agent_amp", name: "Amp", color: "#F59E0B", category: "agent",
     subtitle: N_("Agent"), source: "agent", support: "yes", connect: hooks },

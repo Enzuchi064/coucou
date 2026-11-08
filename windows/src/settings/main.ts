@@ -607,13 +607,14 @@ const CHAT_STRINGS = {
 };
 
 interface CloudDef {
-  id: "google" | "openai" | "openrouter";
+  id: "google" | "openai" | "openrouter" | "opencode";
   name: string;
   placeholder: string;
   where: string;
 }
 
 const CLOUD: CloudDef[] = [
+  { id: "opencode", name: "OpenCode Go", placeholder: "oc_sk_…", where: "opencode.ai/console" },
   { id: "google", name: "Google AI", placeholder: "AIza…", where: "aistudio.google.com" },
   { id: "openai", name: "OpenAI", placeholder: "sk-…", where: "platform.openai.com" },
   { id: "openrouter", name: "OpenRouter", placeholder: "sk-or-…", where: "openrouter.ai/keys" },

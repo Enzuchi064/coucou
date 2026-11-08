@@ -54,6 +54,8 @@ pub struct Chat {
 struct Conversation {
     /// Bumped by every reset, so an answer that lands after "New chat" is dropped.
     epoch: u64,
+    /// A stable id for providers that route a conversation by one (OpenCode Go).
+    session: String,
     /// The provider `native` belongs to.
     owner: Option<String>,
     native: Vec<Value>,
@@ -65,10 +67,21 @@ struct Conversation {
 pub struct Turn {
     epoch: u64,
     provider: String,
+    /// Stable for the life of one conversation, renewed by `reset`.
+    pub session: String,
     /// No earlier turn: the file or window context rides along with this one.
     pub first: bool,
     /// The earlier turns, in this provider's format.
     pub history: Vec<Value>,
+}
+
+/// OpenCode Go asks for a `ses_…` id and reuses a conversation's prompt cache by it.
+fn new_session_id() -> String {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    format!("ses_{:x}{:x}", std::process::id(), nanos)
 }
 
 impl Chat {
@@ -86,9 +99,13 @@ impl Chat {
             c.native = c.plain.clone();
             c.owner = Some(provider.to_string());
         }
+        if c.session.is_empty() {
+            c.session = new_session_id();
+        }
         Turn {
             epoch: c.epoch,
             provider: provider.to_string(),
+            session: c.session.clone(),
             first: c.plain.is_empty(),
             history: c.native.clone(),
         }

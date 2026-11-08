@@ -1,6 +1,6 @@
 // Cloud providers that speak the OpenAI chat completions API: OpenAI, Google AI
-// (Gemini's OpenAI-compatible endpoint, as ClaudeService.swift uses it) and
-// OpenRouter. One table describes them; one client talks to all three.
+// (Gemini's OpenAI-compatible endpoint, as ClaudeService.swift uses it),
+// OpenRouter and OpenCode Go. One table describes them; one client talks to all.
 //
 // Same contract as claude.rs: the key never leaves the credential store and
 // file bytes never cross the IPC boundary. Chat only — no tools are sent, so
@@ -29,6 +29,8 @@ pub struct Provider {
     /// OpenAI's reasoning models refuse `max_tokens` and want
     /// `max_completion_tokens`; the compatible APIs take the older name.
     pub max_tokens_field: &'static str,
+    /// A provider that routes a conversation by a header (OpenCode Go).
+    pub session_header: Option<&'static str>,
 }
 
 pub const PROVIDERS: &[Provider] = &[
@@ -44,6 +46,7 @@ pub const PROVIDERS: &[Provider] = &[
             "computer-use", "transcribe", "image", "sora", "babbage", "davinci", "instruct",
         ],
         max_tokens_field: "max_completion_tokens",
+        session_header: None,
     },
     Provider {
         id: "google",
@@ -54,6 +57,7 @@ pub const PROVIDERS: &[Provider] = &[
         default_model: "gemini-2.0-flash",
         not_chat: &["embed", "imagen", "veo", "aqa", "tts", "audio", "live"],
         max_tokens_field: "max_tokens",
+        session_header: None,
     },
     Provider {
         id: "openrouter",
@@ -64,6 +68,19 @@ pub const PROVIDERS: &[Provider] = &[
         default_model: "openrouter/auto",
         not_chat: &[],
         max_tokens_field: "max_tokens",
+        session_header: None,
+    },
+    Provider {
+        id: "opencode",
+        name: "OpenCode Go",
+        base_url: "https://opencode.ai/inference/go/v1",
+        key: "opencode-api-key",
+        models_path: "models",
+        default_model: "",
+        not_chat: &[],
+        max_tokens_field: "max_tokens",
+        // Go refuses a chat request without it (`MissingSessionID`).
+        session_header: Some("x-opencode-session"),
     },
 ];
 
@@ -168,9 +185,13 @@ pub async fn send(
     let body = request_body(p, model, &chat::system_prompt(false), &turn.history, &user);
 
     let endpoint = url(p, "chat/completions")?;
-    let response = net::client(&endpoint, Duration::from_secs(90))?
+    let mut request = net::client(&endpoint, Duration::from_secs(90))?
         .post(endpoint)
-        .bearer_auth(&key)
+        .bearer_auth(&key);
+    if let Some(header) = p.session_header {
+        request = request.header(header, &turn.session);
+    }
+    let response = request
         .json(&body)
         .send()
         .await
@@ -346,12 +367,30 @@ mod tests {
             "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
         );
         assert_eq!(url(p("openrouter"), "models").unwrap().as_str(), "https://openrouter.ai/api/v1/models");
+        assert_eq!(
+            url(p("opencode"), "chat/completions").unwrap().as_str(),
+            "https://opencode.ai/inference/go/v1/chat/completions"
+        );
+        assert_eq!(url(p("opencode"), "models").unwrap().as_str(), "https://opencode.ai/inference/go/v1/models");
         for prov in PROVIDERS {
             assert!(crate::secrets::KNOWN_KEYS.contains(&prov.key), "{}", prov.key);
             assert!(prov.base_url.starts_with("https://"));
         }
         assert!(provider("anthropic").is_none());
         assert!(provider("ollama").is_none());
+    }
+
+    #[test]
+    fn opencode_go_routes_a_conversation_by_a_stable_session_id() {
+        let chat = Chat::default();
+        let first = chat.begin("opencode").session;
+        let second = chat.begin("opencode").session;
+        assert!(first.starts_with("ses_"));
+        assert_eq!(first, second);
+        chat.reset();
+        assert_ne!(chat.begin("opencode").session, first);
+        assert_eq!(p("opencode").session_header, Some("x-opencode-session"));
+        assert_eq!(p("openai").session_header, None);
     }
 
     #[test]
