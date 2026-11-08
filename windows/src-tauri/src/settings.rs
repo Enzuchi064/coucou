@@ -467,6 +467,7 @@ mod tests {
   "activeIntegrations": ["integration_notion"],
   "mainPill": "agent_cursor",
   "screen": "cursor",
+  "islandPosition": "top",
   "autostart": true,
   "hooksInstalled": true,
   "model": "some-model",
@@ -771,6 +772,7 @@ mod tests {
             ("activeIntegrations", json!("integration_n8n")),
             ("mainPill", json!(["agent_cursor"])),
             ("screen", Value::Null),
+            ("islandPosition", json!(1)),
             ("shortcuts", json!("Ctrl+Alt+A")),
         ] {
             let loaded = parse(&custom_with(key, Some(wrong)))
@@ -990,6 +992,7 @@ mod tests {
                 "activeIntegrations",
                 "mainPill",
                 "screen",
+                "islandPosition",
                 "autostart",
                 "hooksInstalled",
                 "model",
