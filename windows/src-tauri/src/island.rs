@@ -469,8 +469,8 @@ pub fn apply_geometry(app: &AppHandle, pref: &str, position: &str, collapsed: Op
     let mp = *m.position();
     let ms = *m.size();
     let work = m.work_area();
-    let work_pos = *work.position();
-    let work_size = *work.size();
+    let work_pos = work.position;
+    let work_size = work.size;
 
     let (lw, lh) = collapsed.map(clamp_collapsed).unwrap_or((PANEL_W, PANEL_H));
     let pw = (lw * scale).round().max(1.0) as u32;
